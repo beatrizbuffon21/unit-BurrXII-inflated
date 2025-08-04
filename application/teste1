@@ -1,0 +1,152 @@
+library(readr)
+library(dplyr)
+library(gamlss)
+library(dummy)
+library(magrittr)  # para usar %>%
+source("ZIKUM.R")
+
+
+dados <- read.csv("C:/Users/Cliente/Downloads/rscripts-bia-20250723T143126Z-1-001/rscripts-bia/aplicacao/EVASAO.csv", header=TRUE)
+
+
+# Criar um data frame para salvar os resultados
+resultados <- data.frame(
+  CURSO = character(),
+  N = integer(),
+  N_ZEROS = integer(),
+  AIC_ZIUBXII = numeric(),
+  BIC_ZIUBXII = numeric(),
+  DEV_ZIUBXII = numeric(),
+  AIC_BEINF0 = numeric(),
+  BIC_BEINF0 = numeric(),
+  DEV_BEINF0 = numeric(),
+  stringsAsFactors = FALSE
+)
+cursos <- unique(dados$NO_CURSO)
+
+# Loop por curso
+for (curso in cursos) {
+  cat("\n\n>> CURSO:", curso, "\n")
+  
+  X <- dados %>%
+    filter(NO_CURSO == curso, MATRICULAS > 9) %>%
+    mutate(
+      TP_ORG_ACAD = as.factor(TP_ORGANIZACAO_ACADEMICA),
+      RZINSCRITOS = QT_INSCRITO_TOTAL / QT_VG_TOTAL,
+      RZFEM = QT_ING_FEM / QT_ING,
+      RZ_ING_RESERVA = QT_ING_RESERVA_VAGA / QT_ING,
+      RZ_ING_PUBLICA = QT_ING_RVREDEPUBLICA / QT_ING,
+      RZETICO = QT_ING_RVETNICO / QT_ING,
+      RZDEF = QT_ING_RVPDEF / QT_ING,
+      RZSOCIAL = QT_ING_RVSOCIAL_RF / QT_ING,
+      RZDEF2 = QT_ING_DEFICIENTE / QT_ING,
+      RZATVEXT = QT_ING_ATIV_EXTRACURRICULAR / QT_ING,
+      RZ_0_17 = QT_ING_0_17 / QT_ING,
+      RZ_18_24 = QT_ING_18_24 / QT_ING,
+      RZ_25_29 = QT_ING_25_29 / QT_ING,
+      RZ_30_34 = QT_ING_30_34 / QT_ING,
+      RZ_35_39 = QT_ING_35_39 / QT_ING,
+      RZ_40_49 = QT_ING_40_49 / QT_ING,
+      RZ_50_59 = QT_ING_50_59 / QT_ING,
+      RZ_60 = QT_ING_60_MAIS / QT_ING,
+      RZ_BRANCA = QT_ING_BRANCA / QT_ING,
+      RZ_PRETA = QT_ING_PRETA / QT_ING,
+      RZ_PARDA = QT_ING_PARDA / QT_ING,
+      RZ_AMARELA = QT_ING_AMARELA / QT_ING,
+      RZ_INDIGENA = QT_ING_INDIGENA / QT_ING,
+      RZ_FINANC = QT_ING_FINANC / QT_ING,
+      RZ_FIES = QT_ING_FIES / QT_ING,
+      RZ_PROUNII = QT_ING_PROUNII / QT_ING,
+      RZ_PROUNIP = QT_ING_PROUNIP / QT_ING,
+      RZ_PUBLICA = QT_ING_PROCESCPUBLICA / QT_ING,
+      RZ_PRIVADA = QT_ING_PROCESCPRIVADA / QT_ING
+    ) %>%
+    select(
+      TX_EVASAO, IN_CAPITAL, TP_ORG_ACAD, TP_REDE, NO_REGIAO,
+      TP_GRAU_ACADEMICO, TP_MODALIDADE_ENSINO, RZINSCRITOS, RZFEM, QT_ING,
+      QT_ING_APOIO_SOCIAL,
+      RZ_ING_RESERVA, RZ_ING_PUBLICA, RZETICO, RZATVEXT,
+      RZ_0_17, RZ_18_24, RZ_30_34, RZ_40_49,
+      RZ_BRANCA, RZ_PRETA, RZ_PARDA, RZ_AMARELA, RZ_INDIGENA,
+      RZ_FIES, RZ_PROUNIP, RZ_PUBLICA, RZ_PRIVADA
+    )
+  
+  if (nrow(X) < 30) {
+    cat("  >> Curso com poucos dados. Pulando...\n")
+    next
+  }
+  
+  X$REDE <- ifelse(X$TP_REDE == 1, 1, 0)
+  REGIAO <- dummy(as.data.frame(X$NO_REGIAO))[,-1]
+  ORGANIZACAOACADEMICA <- dummy(as.data.frame(X$TP_ORG_ACAD))[,-1]
+  
+  dados1 <- cbind(X, REGIAO, ORGANIZACAOACADEMICA) %>%
+    select(-TP_REDE, -TP_ORG_ACAD, -NO_REGIAO, TX_EVASAO, IN_CAPITAL)
+  
+  n1 <- sum(dados1$TX_EVASAO == 1)
+  if (n1 > 0) {
+    cat("  >> Removendo", n1, "casos com TX_EVASAO == 1\n")
+    dados1 <- dados1 %>% filter(TX_EVASAO < 1)
+  }
+  
+  n_zeros <- sum(dados1$TX_EVASAO == 0)
+  cat("  >> Número de zeros:", n_zeros, "\n")
+  
+  # Testar modelos
+  tryCatch({
+    mod_zi <- gamlss(
+      TX_EVASAO ~ .,
+      sigma.formula = ~1,
+      nu.formula = ~.,
+      nu.start = 0.15,
+      sigma.start = 5,
+      mu.step = .1,
+      family = ZIUBXII(),
+      n.cyc = 500,
+      method = CG(),
+      data = dados1,
+      trace = FALSE
+    )
+    
+    mod_beinf <- gamlss(
+      TX_EVASAO ~ .,
+      sigma.formula = ~1,
+      nu.formula = ~.,
+      mu.step = .1,
+      n.cyc = 500,
+      family = BEINF0(),
+      data = dados1,
+      trace = FALSE
+    )
+    
+    # Registrar resultados
+    resultados <- rbind(resultados, data.frame(
+      CURSO = curso,
+      N = nrow(dados1),
+      N_ZEROS = n_zeros,
+      AIC_ZIUBXII = AIC(mod_zi),
+      BIC_ZIUBXII = GAIC(mod_zi, k = log(nrow(dados1))),
+      DEV_ZIUBXII = deviance(mod_zi),
+      AIC_BEINF0 = AIC(mod_beinf),
+      BIC_BEINF0 = GAIC(mod_beinf, k = log(nrow(dados1))),
+      DEV_BEINF0 = deviance(mod_beinf)
+    ))
+    
+  }, error = function(e) {
+    cat("  >> ERRO ao ajustar modelos para", curso, ":", e$message, "\n")
+  })
+}
+
+# Exibir resultados
+print(resultados)
+
+# Salvar
+# write.csv(resultados, "resultados_modelos.csv", row.names = FALSE)
+
+resultados$Vencedor_AIC <- ifelse(resultados$AIC_ZIUBXII < resultados$AIC_BEINF0, "ZIUBXII", "BEINF0")
+resultados$Vencedor_BIC <- ifelse(resultados$BIC_ZIUBXII < resultados$BIC_BEINF0, "ZIUBXII", "BEINF0")
+resultados$Vencedor_DEV <- ifelse(resultados$DEV_ZIUBXII < resultados$DEV_BEINF0, "ZIUBXII", "BEINF0")
+table(resultados$Vencedor_AIC)
+table(resultados$Vencedor_BIC)
+table(resultados$Vencedor_DEV)
+
