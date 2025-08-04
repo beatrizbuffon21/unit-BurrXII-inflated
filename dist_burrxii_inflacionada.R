@@ -1,5 +1,9 @@
+#------------------------------------------------------------------------------------------
+# BurrXII distribution inflated - basic functions
+#------------------------------------------------------------------------------------------
 
-#---- probability density function
+#------------------------------------------------------------------------------------------
+# probability density function
 dIUBXII <- function(y, mu = .7, sigma = 5, nu = .2, tau = .7, log = FALSE) {
   if (any(y < 0) | any(y > 1)) stop(paste("x must be in [0,1) or (0,1]", "\n", ""))
    fy1 <-  sigma*log(1/tau)*(log(1/y))^(sigma-1)/
@@ -11,6 +15,7 @@ dIUBXII <- function(y, mu = .7, sigma = 5, nu = .2, tau = .7, log = FALSE) {
 }
 integrate(dIUBXII,0,1) # checking the pdf
 
+#------------------------------------------------------------------------------------------
 # cumulative distribution function
 pIUBXII<-function(q, mu = 0.7, sigma = 2, tau=.7, nu=.2,lower.tail = TRUE, log.p = FALSE){
   if (any(mu <= 0) | any(mu >= 1)) stop(paste("mu must be between 0 and 1", "\n", ""))
@@ -24,9 +29,9 @@ pIUBXII<-function(q, mu = 0.7, sigma = 2, tau=.7, nu=.2,lower.tail = TRUE, log.p
   return(cdf)
 }
 pIUBXII(.3)
-integrate(dUBXII,0,.3) # checking the cdf with the pdf
+integrate(dIUBXII,0,.3) # checking the cdf with the pdf
 
-#------------------------------------------------------------------------------------------ #ok
+#------------------------------------------------------------------------------------------
 # quantile function
 qIUBXII<-function(p, mu, sigma, tau, nu, lower.tail = TRUE,
                   log.p = FALSE){
@@ -41,7 +46,6 @@ qIUBXII<-function(p, mu, sigma, tau, nu, lower.tail = TRUE,
 }  
 
 
-
 valor=integrate(dUBXII,0,.34)
 .2+.8*valor$value
 pIUBXII(0.34)
@@ -54,6 +58,3 @@ rIUBXII <- function(n, mu, sigma, nu){
   r <- qIUBXII(p, mu, sigma, nu = nu)
   r
 }
-
-
-
