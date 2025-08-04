@@ -1,7 +1,7 @@
 library(gamlss)
+
 #------------------------------------------------------------------------------------------ 
 # initial values
-#------------------------------------------------------------------------------------------
 mu = 0.7
 sigma = 2.1
 nu = 0.1
@@ -9,7 +9,9 @@ tau=.5
 x=.22
 
 #------------------------------------------------------------------------------------------
-# Burrxii distribution - basic functions
+# Burr XII distribution - basic functions
+#------------------------------------------------------------------------------------------
+
 #------------------------------------------------------------------------------------------
 # density function for x in (0,1)
 dburr<-function(y,mu=.7,sigma=2.1,tau=.5)
@@ -20,6 +22,8 @@ dburr<-function(y,mu=.7,sigma=2.1,tau=.5)
   
   d
 }
+
+#------------------------------------------------------------------------------------------
 # checking dburr
 integrate(dburr,0,1,mu=mu,sigma=sigma,tau=tau)
 # cumulative distribution function for x in (0,1)
@@ -28,20 +32,29 @@ pburr<-function(y,mu=.7,sigma=2.1,tau=.5)
   p<- (1 + log(y^(-1))^sigma)^(log(tau) / log(1 + log(mu^(-1))^sigma))
   p
 }
+
+#------------------------------------------------------------------------------------------
 # checking pburr
 integrate(dburr,0,x,mu=mu,sigma=sigma,tau=tau)
 pburr(x,mu=mu,sigma=sigma,tau=tau)
+
+#------------------------------------------------------------------------------------------
 # quantile function for x in (0,1)
 qburr<-function(u,mu=.7,sigma=2.1,tau=.5)
 {
   q<- exp(-(-1 + u^(log(1 + log(mu^(-1))^sigma)/(log(tau))))^(1/sigma))
   q
 }
+
+#------------------------------------------------------------------------------------------
 # checking qkum
 u<-pburr(x,mu=mu,sigma=sigma,tau=tau)
 c(x,qburr(u,mu=mu,sigma=sigma,tau=tau))
+
 #------------------------------------------------------------------------------------------
-# The Zero inflated BurrXII distribution - basic functions
+# The Zero inflated BurrXII distribution (ZIUBXII) - basic functions
+#------------------------------------------------------------------------------------------
+
 #------------------------------------------------------------------------------------------
 # density function for x in [0,1)
 dZIUBXII<-function (x, mu = 0.7, sigma = 2.1, nu = 0.1, log = FALSE) 
@@ -63,11 +76,14 @@ dZIUBXII<-function (x, mu = 0.7, sigma = 2.1, nu = 0.1, log = FALSE)
   fy <- ifelse(x < 0 | x >= 1, 0, fy)
   fy
 }
+
+#------------------------------------------------------------------------------------------
 # checking dZIUBXII
-dZIUBXII(0) # = nu #retorna NAN
+dZIUBXII(0)
 dZIUBXII(x)
 (1-nu)*dburr(x)
 dZIUBXII(1) # 0 because it is not inflated in one
+
 #------------------------------------------------------------------------------------------ 
 # cumulative distribution function
 pZIUBXII<-function (q,  mu = 0.7, sigma = 2.1, nu = 0.1, lower.tail = TRUE, 
@@ -92,10 +108,13 @@ pZIUBXII<-function (q,  mu = 0.7, sigma = 2.1, nu = 0.1, lower.tail = TRUE,
   cdf <- ifelse(q >= 1, 1, cdf)
   cdf
 }
+
+#------------------------------------------------------------------------------------------
 # checking pZIUBXII
 pZIUBXII(0)
 pZIUBXII(x)
 nu+(1-nu)*pburr(x)
+
 #------------------------------------------------------------------------------------------
 # quantile function
 qZIUBXII<-function (p, mu = 0.7, sigma = 2.1, nu = 0.1, lower.tail = TRUE, 
@@ -123,10 +142,13 @@ qZIUBXII<-function (p, mu = 0.7, sigma = 2.1, nu = 0.1, lower.tail = TRUE,
   )
   q
 }
+
+#------------------------------------------------------------------------------------------
 # checking qZIUBXII
 u=pZIUBXII(x)
 qZIUBXII(u)
 qburr((u - nu)/(1 - nu),mu = 0.7, sigma = 2.1)
+
 #------------------------------------------------------------------------------------------
 # inversion method for random generation
 rZIUBXII<-function (n, mu = 0.5, sigma = 1, nu = 0.1) 
@@ -144,16 +166,14 @@ rZIUBXII<-function (n, mu = 0.5, sigma = 1, nu = 0.1)
   r <- qZIUBXII(p, mu = mu, sigma = sigma, nu = nu)
   r
 }
+
 #------------------------------------------------------------------------------------------
 # ZIUBXII in gamlss.family
 #------------------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------------------
 # derivatives of log.kum
-
-#log-liklihood burrxii
-
-#log(log(tau^(-sigma))/(log(1 + log(mu^(-1))^sigma))) - log(y) +
-#  (log(tau)/(log(1 + log(mu^(-1))^sigma))-1) * log(1+ log(y^(-1))^sigma) + 
-#  (sigma-1)*(log(-log(y)))
+# log-liklihood burrxii
 
 burrxii<-expression(
   log(log(tau^(-sigma))/(log(1 + log(mu^(-1))^sigma))) - log(y) +
@@ -164,7 +184,8 @@ burrxii<-expression(
 m1<-D(burrxii,"mu")
 s1<-D(burrxii,"sigma")
 ms2<-D(m1,"sigma")
-#
+
+#------------------------------------------------------------------------------------------
 ZIUBXII<-function (mu.link = "logit", sigma.link = "log", nu.link = "logit") 
 {
   mstats <- checklink("mu.link", "ZIUBXII", substitute(mu.link), 
@@ -240,23 +261,29 @@ ZIUBXII<-function (mu.link = "logit", sigma.link = "log", nu.link = "logit")
   )
 }
 
-# Checking the results
-library(gamlss)
+
+#------------------------------------------------------------------------------------------
+# case 2: without regressors
+#------------------------------------------------------------------------------------------
+
 set.seed(10)
 n<-50
-# Case 1: without regressors
+
 mu_true<-.8
 sigma_true<-2.1
 nu_true<-.2
 mu_result<-sigma_result<-nu_result<-c()
+
 for (i in 1:100) {
-  y<-rIUBXII(n,mu_true,sigma_true,nu_true)
-  fit1<-gamlss(y~1,family="IUBXII",trace=F)
+  y<-rZIUBXII(n,mu_true,sigma_true,nu_true)
+  fit1<-gamlss(y~1,family="ZIUBXII",trace=F)
   mu_result[i]<-fit1$mu.fv[1]
   sigma_result[i]<-fit1$sigma.fv[1]
   nu_result[i]<-fit1$nu.fv[1]
 }
+
 fit1$sigma.coefficients
+
 result1<- matrix(c(mu_true, mean(mu_result),
                    sigma_true, mean(sigma_result),
                    nu_true, mean(nu_result)),2,3)
@@ -264,12 +291,17 @@ colnames(result1)<-c("mu","sigma","nu")
 rownames(result1)<-c("true value","mean")
 print(round(result1,2))
 
-# Case 2: with regressors - com modificações
+#------------------------------------------------------------------------------------------
+# case 2: with regressors
+#------------------------------------------------------------------------------------------
+
 set.seed(10)
-n=300
+n=50
 X <- runif(n)
+
 logit_link <- make.link("logit")
 log_link <- make.link("log")
+
 b1 <- 0.7
 b2 <- 3
 mu_true <- logit_link$linkinv(b1 + b2 * X)
@@ -279,10 +311,8 @@ sigma_true <- log_link$linkinv(g1 + g2 * X)
 c1 <- -1.2
 c2 <- .3
 nu_true <- logit_link$linkinv(c1 + c2 * X) 
-# estava me retornando erro de que nu precisava estar entre 0 e 1
-# achei essa solução de plogis, não sei se é correta
-# Renata: serve, mas para padronizar deixei a mesma funcao que é usada para mu
-R <- 10000
+
+R <- 100
 mu_result <- matrix(NA, R, 2)
 sigma_result <- matrix(NA, R, 2)
 nu_result <- matrix(NA, R, 2)
@@ -304,10 +334,6 @@ for (i in 1:R) {
     nu_result[i, ] <- fit1$nu.coefficients
   }
 }
-#retorna erro: Error in dZIUBXII(y, mu, sigma, nu, log = TRUE) : 
-#              mu must be beetwen 0 and 1
-# mas mu_true só tem dentro valores entre 0 e 1
-# é um erro numérico que ocorre para essa réplica, mudando o cenário isso deixa de acontecer
 
 valid_rows <- !is.na(mu_result[, 1]) & !is.na(sigma_result[, 1]) & !is.na(nu_result[, 1])
 
