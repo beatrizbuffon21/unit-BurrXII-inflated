@@ -1,1 +1,167 @@
+library(readr)
+library(dplyr)
+library(gamlss)
+library(tibble)
+library(dummy)
+library(moments)
+library(gridExtra)
+source("ZIKUM.R")
+
+
+dados <- read.csv("C:/Users/Cliente/Downloads/rscripts-bia-20250723T143126Z-1-001/rscripts-bia/aplicacao/EVASAO.csv", header=TRUE)
+head(dados)
+
+names(dados)
+
+X<- dados |> 
+  filter(NO_CURSO=="ODONTOLOGIA",MATRICULAS>9
+  ) |> 
+  # mutate(TX_EVASAO_NOVA=TX_EVASAO+.00001)
+  mutate(TP_ORG_ACAD=as.factor(TP_ORGANIZACAO_ACADEMICA),
+         RZINSCRITOS=QT_INSCRITO_TOTAL/QT_VG_TOTAL,
+         RZFEM=QT_ING_FEM/QT_ING,
+         RZ_ING_RESERVA=QT_ING_RESERVA_VAGA/QT_ING,
+         RZ_ING_PUBLICA=QT_ING_RVREDEPUBLICA/QT_ING,
+         RZETICO=QT_ING_RVETNICO/QT_ING,
+         RZDEF=QT_ING_RVPDEF/QT_ING,
+         RZSOCIAL=QT_ING_RVSOCIAL_RF/QT_ING,
+         RZDEF2=QT_ING_DEFICIENTE/QT_ING,
+         RZATVEXT=QT_ING_ATIV_EXTRACURRICULAR/QT_ING,
+         RZ_0_17=QT_ING_0_17/QT_ING,
+         RZ_18_24=QT_ING_18_24/QT_ING,
+         RZ_25_29=QT_ING_25_29/QT_ING,
+         RZ_30_34=QT_ING_30_34/QT_ING,
+         RZ_35_39=QT_ING_35_39/QT_ING,
+         RZ_40_49=QT_ING_40_49/QT_ING,
+         RZ_50_59=QT_ING_50_59/QT_ING,
+         RZ_60=QT_ING_60_MAIS/QT_ING,
+         RZ_BRANCA=QT_ING_BRANCA/QT_ING,
+         RZ_PRETA=QT_ING_PRETA/QT_ING,
+         RZ_PARDA=QT_ING_PARDA/QT_ING,
+         RZ_AMARELA=QT_ING_AMARELA/QT_ING,
+         RZ_INDIGENA=QT_ING_INDIGENA/QT_ING,
+         RZ_FINANC=QT_ING_FINANC/QT_ING,
+         RZ_FIES=QT_ING_FIES/QT_ING,
+         RZ_PROUNII=QT_ING_PROUNII/QT_ING,
+         RZ_PROUNIP=QT_ING_PROUNIP/QT_ING,
+         RZ_PUBLICA=QT_ING_PROCESCPUBLICA/QT_ING,
+         RZ_PRIVADA=QT_ING_PROCESCPRIVADA/QT_ING
+  )|> 
+  select(TX_EVASAO, IN_CAPITAL, TP_ORG_ACAD,TP_REDE,NO_REGIAO,
+         TP_GRAU_ACADEMICO, TP_MODALIDADE_ENSINO, RZINSCRITOS, RZFEM,QT_ING,
+         QT_ING_APOIO_SOCIAL,
+         RZ_ING_RESERVA, RZ_ING_PUBLICA, RZETICO, RZATVEXT,
+         RZ_0_17, RZ_18_24, RZ_30_34,RZ_40_49, RZ_BRANCA, RZ_PRETA, RZ_PARDA,
+         RZ_AMARELA, RZ_INDIGENA, RZ_FIES,RZ_PROUNIP,# RZ_PROUNII,
+         RZ_PUBLICA, RZ_PRIVADA
+         
+  ) 
+
+X$REDE <- ifelse(X$TP_REDE == 1, 1, 0)
+REGIAO<-dummy(as.data.frame(X$NO_REGIAO))[,-1]
+ORGANIZACAOACADEMICA<-dummy(as.data.frame(X$TP_ORG_ACAD))[,-1]
+
+dados1<- 
+  cbind(X, REGIAO,ORGANIZACAOACADEMICA) |>
+  select(-TP_REDE,-TP_ORG_ACAD,-NO_REGIAO,
+         TX_EVASAO,IN_CAPITAL)  
+attach(ORGANIZACAOACADEMICA)
+attach(REGIAO)
+
+n1 <- sum(dados1$TX_EVASAO == 1)
+if (n1 > 0) {
+  message("Removendo ", n1, " linha(s) com TX_EVASAO == 1")
+  dados1 <- dados1 %>% filter(TX_EVASAO < 1)
+}
+
+# verificar se zeros continuam, que são permitidos
+cat("Número de zeros em TX_EVASAO:", sum(dados1$TX_EVASAO == 0), "\n")
+
+table(dados1$TX_EVASAO) #- so com zero ou só com um
+sum(dados1$TX_EVASAO==0)
+sum(dados1$TX_EVASAO==1)
+
+
+ZIUBXII$sigma.fv
+
+ZIUBXII <- gamlss(
+  TX_EVASAO ~ .,            
+  sigma.formula = ~ 1,     
+  nu.formula = ~ ., 
+  nu.start = 0.15,
+  sigma.start = 5,
+  mu.step=.1,
+  family = ZIUBXII(), 
+  n.cyc=500,
+  method=CG(),
+  data = dados1,
+  trace = FALSE
+)
+summary(ZIUBXII)
+
+
+BETA= gamlss(TX_EVASAO~.,
+             sigma.formula=~1, 
+             nu.formula=~.,
+             # method=CG(),
+             mu.step=.1,
+             n.cyc=500,
+             family=BEINF0(),
+             data=dados1)#, trace=F)
+summary(BETA)
+
+
+simplex <- gamlss(
+  TX_EVASAO ~ ., 
+  sigma.formula = ~ 1, 
+  n.cyc=500,
+  family = SIMPLEX(), 
+  data = dados1
+)
+
+
+kuma <- gamlss(
+  TX_EVASAO ~ ., 
+  sigma.formula = ~ 1, 
+  family = KUM(mu.link = "logit", sigma.link = "log"), 
+  data = dados1
+)
+
+
+
+weibull <- gamlss(
+  TX_EVASAO ~ ., 
+  sigma.formula = ~ 1, 
+  family = "UW"(mu.link = "logit", sigma.link = "log"), 
+  data = dados1
+)
+
+
+
+
+
+
+
+# https://www.mdpi.com/2571-905X/8/2/38/ Tabela 6
+# https://github.com/ryanxnovaes/sec-project
+# U-Lindley; Kumaraswamy; unit Weibull
+
+# # Collect performance indicators: AIC, BIC, R², MAPE, MAE, RMSE
+# extract_metrics <- function(model, y) {
+#   c(model$aic, model$sbc, Rsq(model),
+#     forecast::accuracy(model$mu.fv, y)[, c(5, 3, 2)])
+# }
+#
+# measures <- rbind(
+#   extract_metrics(beta_fixed, datafix$PBNVS),
+#   extract_metrics(simplex_fixed, datafix$PBNVS),
+#   extract_metrics(kuma_fixed, datafix$PBNVS),
+#   extract_metrics(uw_fixed, datafix$PBNVS),
+#   extract_metrics(rubxii_fixed, datafix$PBNVS)
+# )
+#
+# colnames(measures) <- c("AIC", "BIC", "RSQ", "MAPE", "MAE", "RMSE")
+# rownames(measures) <- c("Beta", "Simplex", "Kuma", "UW", "RUBXII")
+
+print(round(measures, 4))
 
