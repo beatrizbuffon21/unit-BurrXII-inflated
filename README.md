@@ -64,5 +64,3 @@ O conteúdo deste trabalho é de exclusiva responsabilidade dos autores e não r
 * [Linkedin](https://www.linkedin.com/in/beatriz-woos-buffon-102ab5191/)
 * [Pórtfólio](https://beatrizbuffon21.github.io/)
 
-### Licença
-Este projeto está sob a licença [MIT](link_para_licenca_ou_outra_licenca).
