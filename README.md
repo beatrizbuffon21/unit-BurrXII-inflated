@@ -59,7 +59,7 @@ O conteúdo deste trabalho é de exclusiva responsabilidade dos autores e não r
 ├── refs/            # Artigos e referências bibliográficas
 └── README.md
 ---
-
+```
 ### Contato
 * [Linkedin](https://www.linkedin.com/in/beatriz-woos-buffon-102ab5191/)
 * [Pórtfólio](https://beatrizbuffon21.github.io/)
