@@ -58,5 +58,4 @@ O conteúdo deste trabalho é de exclusiva responsabilidade dos autores e não r
 │   └── score_vector.R               # Vetor Escore da Distribuição BurrXII
 ├── refs/            # Artigos e referências bibliográficas
 └── README.md
----
 
