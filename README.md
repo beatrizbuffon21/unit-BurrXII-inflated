@@ -1,6 +1,5 @@
 # Modelo de Regressão Burr XII unitária inflacionada em zero ou uns: formulação e estudo de simulação
 
-### Status do Projeto
 Este repositório contém os materiais relacionados à pesquisa "Modelo de Regressão Burr XII unitária inflacionada em zero ou uns: formulação e estudo de simulação". O projeto está em andamento, com a etapa de simulações concluída e planos para a aplicação futura dos modelos na análise de taxas de evasão no ensino superior.
 
 ---
@@ -41,26 +40,29 @@ O conteúdo deste trabalho é de exclusiva responsabilidade dos autores e não r
 
 ---
 
-## Como Citar
-Caso este trabalho seja publicado, você pode usar a seguinte referência:
+### Estrutura do Repositório
 
-*A ser definido.*
-
+```bash
+.
+├── application/     # Materiais e dados da aplicação prática
+│   ├── data_dictionary_2018.xls  # Dicionário de dados
+│   ├── esqueleto_regressao       # Scripts de regressão
+│   └── teste1                    # Arquivos de teste
+├── codes/           # Scripts R com a formulação e funções dos modelos
+│   ├── OIUBXII.R                    # Modelo inflacionado em zeros
+│   ├── OIUBXII_internal_deriv.R     # Modelo inflacionado em zeros com mudança dentro das derivadas do GAMLSS
+│   ├── ZIUBXII.R                    # Modelo inflacionado em uns
+│   ├── ZIUBXII_internal_deriv.R     # Modelo inflacionado em uns com mudança dentro das derivadas do GAMLSS
+│   ├── dist_burrxii.R               # Funções da Distribuição BurrXII
+│   ├── dist_burrxii_inflacionada.R  # Funções da Distribuição BurrXII
+│   └── score_vector.R               # Vetor Escore da Distribuição BurrXII
+├── refs/            # Artigos e referências bibliográficas
+└── README.md
 ---
 
-## Repositório
-Neste repositório você pode encontrar:
-* `scripts/`: Scripts em R com as implementações dos modelos ZIUBXII e OIUBXII.
-* `simulacoes/`: Código e resultados dos estudos de simulação.
-* `aplicacao/`: Código e análise dos dados de evasão (em desenvolvimento).
-* `documentos/`: Artigos, apresentações e outros materiais relacionados ao projeto.
-
----
-
-### Contribua
-Contribuições são bem-vindas! Sinta-se à vontade para abrir uma *issue* para discutir ideias ou enviar um *pull request* com melhorias.
-
----
+### Contato
+* [Linkedin](https://www.linkedin.com/in/beatriz-woos-buffon-102ab5191/)
+* [Pórtfólio](https://beatrizbuffon21.github.io/)
 
 ### Licença
 Este projeto está sob a licença [MIT](link_para_licenca_ou_outra_licenca).
