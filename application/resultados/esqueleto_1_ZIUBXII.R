@@ -218,11 +218,11 @@ message("\n====== RESULTADOS FINAIS ======")
 print(resultados)
 
 # salva em CSV
-write.csv(resultados, "resultados_cursos_PONTO.csv", row.names = FALSE)
-message("Arquivo salvo: resultados_cursos_PONTO.csv")
+write.csv(resultados, "resultados_1.csv", row.names = FALSE)
+message("Arquivo salvo: resultados_1.csv")
 
 
-dados <- read.csv("C:/Users/Cliente/Documents/ic - renata/resultados_ziubxii_intercepto/resultados_cursos_PONTO.csv")
+dados <- read.csv("C:/Users/Cliente/Documents/ic - renata/resultados_ziubxii_intercepto/resultados_1.csv")
 dados$AIC_ZIUBXII <- format(dados$AIC_ZIUBXII, scientific = FALSE)
 dados$BIC_ZIUBXII <- format(dados$BIC_ZIUBXII, scientific = FALSE)
 View(dados)
