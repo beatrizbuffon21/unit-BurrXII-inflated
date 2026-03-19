@@ -1,3 +1,5 @@
+esqueleto ziubxii do modelo com intercepto
+
 library(readr)
 library(dplyr)
 library(gamlss)
