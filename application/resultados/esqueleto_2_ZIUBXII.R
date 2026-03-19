@@ -1,4 +1,4 @@
-esqueleto ziubxii do modelo com intercepto
+esqueleto ziubxii do modelo com covariaveis
 
 library(readr)
 library(dplyr)
